@@ -9,7 +9,6 @@ from numpy.testing import (
         )
 from numpy import random
 import sys
-import warnings
 
 
 class TestSeed(object):
@@ -449,6 +448,11 @@ class TestRandomDist(object):
         assert_equal(np.random.choice(['a', 'b'], size=(3, 0, 4)).shape, (3, 0, 4))
         assert_raises(ValueError, np.random.choice, [], 10)
 
+    def test_choice_nan_probabilities(self):
+        a = np.array([42, 1, 2])
+        p = [None, None, None]
+        assert_raises(ValueError, np.random.choice, a, p=p)
+
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
@@ -467,6 +471,10 @@ class TestRandomDist(object):
                      lambda x: [(i, i) for i in x],
                      lambda x: np.asarray([[i, i] for i in x]),
                      lambda x: np.vstack([x, x]).T,
+                     # gh-11442
+                     lambda x: (np.asarray([(i, i) for i in x],
+                                           [("a", int), ("b", int)])
+                                .view(np.recarray)),
                      # gh-4270
                      lambda x: np.asarray([(i, i) for i in x],
                                           [("a", object, 1),
@@ -939,7 +947,8 @@ class TestRandomDist(object):
         assert_array_almost_equal(actual, desired, decimal=15)
 
     def test_weibull_0(self):
-        assert_equal(np.random.weibull(a=0), 0)
+        np.random.seed(self.seed)
+        assert_equal(np.random.weibull(a=0, size=12), np.zeros(12))
         assert_raises(ValueError, np.random.weibull, a=-0.)
 
     def test_zipf(self):
@@ -1345,6 +1354,8 @@ class TestBroadcast(object):
         assert_array_almost_equal(actual, desired, decimal=14)
         assert_raises(ValueError, wald, bad_mean, scale * 3)
         assert_raises(ValueError, wald, mean, bad_scale * 3)
+        assert_raises(ValueError, wald, 0.0, 1)
+        assert_raises(ValueError, wald, 0.5, 0.0)
 
     def test_triangular(self):
         left = [1]

@@ -17,7 +17,7 @@ from . import polyutils as pu
 __all__ = ['ABCPolyBase']
 
 class ABCPolyBase(object):
-    """An abstract base class for series classes.
+    """An abstract base class for immutable series classes.
 
     ABCPolyBase provides the standard Python numerical methods
     '+', '-', '*', '//', '%', 'divmod', '**', and '()' along with the
@@ -317,13 +317,6 @@ class ABCPolyBase(object):
             )
             needs_parens = True
 
-        # filter out uninteresting coefficients
-        filtered_coeffs = [
-            (i, c)
-            for i, c in enumerate(self.coef)
-            # if not (c == 0)  # handle NaN
-        ]
-
         mute = r"\color{{LightGray}}{{{}}}".format
 
         parts = []
@@ -418,7 +411,7 @@ class ABCPolyBase(object):
         return self.__class__(coef, self.domain, self.window)
 
     def __div__(self, other):
-        # set to __floordiv__,  /, for now.
+        # this can be removed when python 2 support is dropped.
         return self.__floordiv__(other)
 
     def __truediv__(self, other):
@@ -511,9 +504,6 @@ class ABCPolyBase(object):
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
         return quo, rem
-
-    # Enhance me
-    # some augmented arithmetic operations could be added here
 
     def __eq__(self, other):
         res = (isinstance(other, self.__class__) and
